@@ -1,0 +1,51 @@
+# Model arguments
+model_name_or_path: meta-llama/Llama-3.1-8B
+model_revision: main
+torch_dtype: bfloat16
+attn_implementation: flash_attention_2
+
+# Data training arguments
+chat_template: "{% for message in messages %}{{'<|im_start|>' + message['role'] + '\n' + message['content'] + '<|im_end|>' + '\n'}}{% endfor %}{% if add_generation_prompt %}{{ '<|im_start|>assistant\n' }}{% endif %}"
+dataset_mixture:
+  datasets:
+    - id: HuggingFaceH4/ultrachat_200k
+      config: default
+      split: train_sft            
+      columns:
+        - messages
+      weight: 1.0
+  test_split_size: 0.05
+  seed: 0
+dataset_num_proc: 24
+
+# SFT trainer config
+bf16: true
+dataset_kwargs:
+  add_special_tokens: false  # We already wrap <bos> and <eos> in the chat template
+  append_concat_token: false # No need to add <eos> across samples
+do_eval: false
+gradient_accumulation_steps: 4
+gradient_checkpointing: true
+gradient_checkpointing_kwargs:
+  use_reentrant: false
+learning_rate: 2.0e-05
+log_level: info
+logging_steps: 5
+logging_strategy: steps
+lr_scheduler_type: cosine
+max_seq_length: 2048
+max_steps: -1
+num_train_epochs: 1
+output_dir: results/model/llama3-8b_sft
+overwrite_output_dir: true
+per_device_train_batch_size: 8
+push_to_hub: false
+remove_unused_columns: true
+report_to:
+- wandb
+save_strategy: epoch
+seed: 42
+warmup_ratio: 0.1
+optim: adamw_torch
+adam_beta1: 0.9
+adam_beta2: 0.999

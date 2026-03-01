@@ -1,0 +1,43 @@
+# Model arguments
+model_name_or_path: results/model/llama3-8b_sft
+torch_dtype: bfloat16
+
+# Data training arguments
+dataset_mixture:
+  datasets:
+    - id: HuggingFaceH4/ultrafeedback_binarized
+      config: default
+      split: train
+      columns:
+        - chosen
+        - rejected
+      weight: 1.0
+  test_split_size: 500
+  seed: 0
+dataset_num_proc: 12
+
+# DPOTrainer arguments
+bf16: true
+beta: 0.01
+do_eval: false
+gradient_accumulation_steps: 8
+gradient_checkpointing: true
+gradient_checkpointing_kwargs:
+  use_reentrant: False
+learning_rate: 5.0e-7
+log_level: info
+logging_steps: 10
+lr_scheduler_type: cosine
+max_length: 2048
+max_prompt_length: 1800
+num_train_epochs: 1
+optim: adamw_torch
+adam_beta1: 0.9
+adam_beta2: 0.999
+output_dir: results/model/llama3-8b_dpo
+per_device_train_batch_size: 4
+report_to:
+- wandb
+save_strategy: epoch
+seed: 42
+warmup_ratio: 0.1
