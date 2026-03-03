@@ -142,10 +142,10 @@ def main(script_args, training_args, model_args):
     elif last_checkpoint is not None:
         checkpoint = last_checkpoint
     train_result = trainer.train(resume_from_checkpoint=checkpoint)
-    #metrics = train_result.metrics
-    #metrics["train_samples"] = len(dataset[script_args.dataset_train_split])
-    #trainer.log_metrics("train", metrics)
-    #trainer.save_metrics("train", metrics)
+    metrics = train_result.metrics
+    metrics["train_samples"] = len(dataset)
+    trainer.log_metrics("train", metrics)
+    trainer.save_metrics("train", metrics)
     trainer.save_state()
 
     if training_args.eval_strategy != "no":
