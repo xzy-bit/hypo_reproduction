@@ -1,0 +1,8 @@
+completions_kwargs:
+  batch_size: 900
+  max_new_tokens: 2048
+  model_kwargs:
+    torch_dtype: bfloat16
+  tokenizer_name_or_path: mistralai/Mistral-7B-Instruct-v0.2
+  temperature: 0.5
+prompt_template: eval/alpacaeval/templates/mistral_instruct.txt

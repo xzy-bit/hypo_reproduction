@@ -4,12 +4,9 @@ torch_dtype: null
 attn_implementation: flash_attention_2
 
 # Data training arguments
-dataset_mixer:
-  princeton-nlp/mistral-instruct-ultrafeedback: 1.0
-dataset_splits:
-- train
-- test
-preprocessing_num_workers: 12
+dataset_name: HuggingFaceH4/ultrafeedback_binarized
+dataset_config: default
+dataset_train_split: train_prefs
 
 # SimPOTrainer arguments
 bf16: true
