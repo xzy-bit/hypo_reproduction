@@ -63,6 +63,46 @@ from hypo_dpo_trainer import HypoDPOTrainer
 
 logger = logging.getLogger(__name__)
 
+def apply_chat_template_like_simpo(example, tokenizer):
+    """
+    Build a chat-templated prompt from `messages`, then keep prompt/chosen/rejected as strings.
+    This avoids TRL's internal maybe_apply_chat_template schema checks.
+    """
+    # 1) build prompt from messages if available
+    if "messages" in example and isinstance(example["messages"], list) and len(example["messages"]) > 0:
+        msgs = example["messages"]
+
+        # If last is assistant, exclude it from prompt (prompt should end with user turn)
+        if msgs[-1].get("role") == "assistant":
+            prompt_msgs = msgs[:-1]
+        else:
+            prompt_msgs = msgs
+
+        prompt = tokenizer.apply_chat_template(
+            prompt_msgs, tokenize=False, add_generation_prompt=True
+        )
+    else:
+        # fallback: use existing prompt (string)
+        prompt = example.get("prompt", "")
+
+    # 2) chosen/rejected should be strings for DPOTrainer
+    chosen = example["chosen"]
+    rejected = example["rejected"]
+
+    # If chosen/rejected are messages, template only the last assistant turn
+    if isinstance(chosen, list):
+        chosen = tokenizer.apply_chat_template(chosen[-1:], tokenize=False)
+    if isinstance(rejected, list):
+        rejected = tokenizer.apply_chat_template(rejected[-1:], tokenize=False)
+
+    # 3) remove leading BOS to avoid double-BOS issues
+    if tokenizer.bos_token:
+        if isinstance(chosen, str) and chosen.startswith(tokenizer.bos_token):
+            chosen = chosen[len(tokenizer.bos_token):]
+        if isinstance(rejected, str) and rejected.startswith(tokenizer.bos_token):
+            rejected = rejected[len(tokenizer.bos_token):]
+
+    return {"prompt": prompt, "chosen": chosen, "rejected": rejected}
 
 def main(script_args, training_args, model_args):
     # Set seed for reproducibility
@@ -111,10 +151,16 @@ def main(script_args, training_args, model_args):
     #########
     # Dataset
     #########
-    dataset = get_dataset(script_args)
-    dataset = dataset["train_prefs"]
-    #dataset = datasets.load_from_disk(script_args.dataset_name)
-    dataset = dataset.remove_columns(['prompt', 'messages'])
+    raw_dataset = get_dataset(script_args)["train_prefs"]
+
+    column_names = list(raw_dataset.features)
+
+    dataset = raw_dataset.map(
+        apply_chat_template_like_simpo,
+        fn_kwargs={"tokenizer": tokenizer},
+        num_proc=8,
+        remove_columns=column_names, 
+        desc="Apply chat template (SimPO-style)")
 
     ##########
     # Training
@@ -122,7 +168,7 @@ def main(script_args, training_args, model_args):
     #def formatting_func(example):
     #    return tokenizer.apply_chat_template(example["messages"], tokenize=False)
 
-    trainer = DPOTrainer(
+    trainer = HypoDPOTrainer(
         model,
         ref_model,
         args=training_args,

@@ -25,7 +25,7 @@ class HypoDPOTrainer(DPOTrainer):
         # Hard HyPO: 对 ref_logratios 进行裁剪（论文 Eq. 11）
         ref_logratios = torch.maximum(ref_logratios, torch.tensor(0.0, device=ref_logratios.device))
 
-        logits = pi_logratios - ref_logratios
+        logits = pi_logratios - ref_logratios - 10.0
         loss = -F.logsigmoid(self.beta * logits)
 
         chosen_rewards = self.beta * (policy_chosen_logps - reference_chosen_logps).detach()

@@ -18,7 +18,7 @@ gradient_accumulation_steps: 8
 gradient_checkpointing: true
 gradient_checkpointing_kwargs:
   use_reentrant: False
-learning_rate: 5.0e-7
+learning_rate: 1.0e-6
 log_level: info
 logging_steps: 10
 lr_scheduler_type: cosine
@@ -28,7 +28,7 @@ num_train_epochs: 1
 optim: adamw_torch
 adam_beta1: 0.9
 adam_beta2: 0.999
-output_dir: results/model/llama3-8b_dpo
+output_dir: results/model/llama3-8b_sp_dpo
 per_device_train_batch_size: 4
 report_to:
 - wandb
